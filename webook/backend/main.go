@@ -1,4 +1,4 @@
-package backend
+package main
 
 import (
 	"GolangLearning/webook/backend/internal"
