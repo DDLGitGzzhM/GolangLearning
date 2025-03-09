@@ -1,4 +1,4 @@
-package internal
+package web
 
 import (
 	"fmt"
@@ -6,18 +6,41 @@ import (
 
 	"github.com/dlclark/regexp2"
 	"github.com/gin-gonic/gin"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+
+	"GolangLearning/webook/backend/internal/domain"
+	"GolangLearning/webook/backend/internal/repository"
+	"GolangLearning/webook/backend/internal/repository/dao"
+	"GolangLearning/webook/backend/internal/service"
+	"GolangLearning/webook/backend/pkg"
 )
 
+var dba = gorm.DB{}
+
+func init() {
+	db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
+	pkg.PanicIf(err)
+	err = dao.InitTable(db)
+	pkg.PanicIf(err)
+	dba = *db
+}
+
 type UserHandler struct {
+	UserSvc     *service.UserService
 	EmailRegexp *regexp2.Regexp
 }
 
-func NewUserHandler() *UserHandler {
+func NewUserHandler(svc *service.UserService) *UserHandler {
 	const EmailRegexpStr = "^\\w+(-+.\\w+)*@\\w+(-.\\w+)*.\\w+(-.\\w+)*$"
-	return &UserHandler{EmailRegexp: regexp2.MustCompile(EmailRegexpStr, regexp2.None)}
+	return &UserHandler{
+		UserSvc:     svc,
+		EmailRegexp: regexp2.MustCompile(EmailRegexpStr, regexp2.None)}
 }
 
-var UserRoute = NewUserHandler()
+var (
+	UserRoute = NewUserHandler(service.NewUserService(repository.NewUserRepository(dao.NewUserDAO(&dba))))
+)
 
 func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	up := server.Group("/users")
@@ -53,6 +76,10 @@ func (u *UserHandler) SignUpHandler(gtx *gin.Context) {
 
 	if !isMatched {
 		gtx.String(http.StatusOK, fmt.Sprintf("邮箱不符合规则 %s", req.Email))
+		return
+	}
+	if err = u.UserSvc.SignUp(gtx, domain.NewUser(req.Email, req.Password)); err != nil {
+		gtx.String(http.StatusOK, fmt.Sprintf("注册失败 : %s", err.Error()))
 		return
 	}
 	gtx.String(http.StatusOK, "注册成功")

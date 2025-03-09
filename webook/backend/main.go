@@ -7,7 +7,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
-	"GolangLearning/webook/backend/internal"
+	"GolangLearning/webook/backend/internal/web"
 	"GolangLearning/webook/backend/pkg"
 )
 
@@ -28,6 +28,6 @@ func main() {
 		MaxAge: 100 * time.Millisecond,
 	}))
 
-	internal.RegisterUserRoutes(server)
+	web.RegisterUserRoutes(server)
 	pkg.PanicIf(server.Run(":8080"))
 }
