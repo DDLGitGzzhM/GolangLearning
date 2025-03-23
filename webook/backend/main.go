@@ -12,8 +12,13 @@ import (
 )
 
 func main() {
-	server := gin.Default()
+	server := initRestServer()
+	web.RegisterUserRoutes(server)
+	pkg.PanicIf(server.Run(":8080"))
+}
 
+func initRestServer() *gin.Engine {
+	server := gin.Default()
 	// 确保 CORS 中间件在最前面
 	server.Use(cors.New(cors.Config{
 		AllowHeaders:     []string{"content-type", "authorization"},
@@ -27,7 +32,5 @@ func main() {
 		},
 		MaxAge: 100 * time.Millisecond,
 	}))
-
-	web.RegisterUserRoutes(server)
-	pkg.PanicIf(server.Run(":8080"))
+	return server
 }
