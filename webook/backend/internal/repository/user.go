@@ -7,6 +7,8 @@ import (
 	"GolangLearning/webook/backend/internal/repository/dao"
 )
 
+var UserEmailDuplicate = dao.UserEmailDuplicate
+
 type UserRepository struct {
 	dao *dao.UserDAO
 }

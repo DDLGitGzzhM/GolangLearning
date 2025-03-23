@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -79,6 +80,10 @@ func (u *UserHandler) SignUpHandler(gtx *gin.Context) {
 		return
 	}
 	if err = u.UserSvc.SignUp(gtx, domain.NewUser(req.Email, req.Password)); err != nil {
+		if errors.Is(err, service.UserEmailDuplicate) {
+			gtx.String(http.StatusOK, fmt.Sprintf("邮箱重复 : %s", req.Email))
+			return
+		}
 		gtx.String(http.StatusOK, fmt.Sprintf("注册失败 : %s", err.Error()))
 		return
 	}
